@@ -12,7 +12,7 @@ APP_LOGGING = {
 }
 
 #: The path that geocoder indexes will be stored to
-GEO_INDEX_PATH='/Users/jeff/Source/ga-1.4/ga_geocoder_indexes'
+GEO_INDEX_PATH='/Users/jeffersonheard/Source/ga-1.4/ga_geocoder_indexes'
 
 #: URLs for Nominatim OSM services for OSM geocoding.
 NOMINATIM_URLS=[

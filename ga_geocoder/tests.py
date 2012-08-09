@@ -9,13 +9,9 @@ from django.test import TestCase
 from django.contrib.gis.geos import Point
 from unittest import skip
 
-from ga_geocoder import utils
+from ga_geocoder import utils, geocoder
 from ga_geocoder.parsers import independent, en_us
 
-test_file = '/Users/jeff/Source/ga_geocoder/ga_geocoder/fixtures/tl_2010_37_zcta510.shp'
-test_layer = 'tl_2010_37_zcta510'
-test_field = 'ZCTA5CE10'
-test_codes = ["27713", "27707", "27516"]
 
 class IndependentParserTest(TestCase):
     def test_ci_shortcode(self):
@@ -87,21 +83,24 @@ class UsEnParserTest(TestCase):
         self.assertNotEqual(e, f)
         self.assertListEqual(a[0:2], ['123','27707'])
 
-
 class ExactGeocoderTest(TestCase):
+    test_file = '/Users/jeffersonheard/Source/ga_geocoder/ga_geocoder/fixtures/tl_2010_37063_tract10.shp'
+    test_layer = 'tl_2010_37063_tract10'
+    test_field = 'GEOID10'
+    test_codes = ["37063002025","37063002028","37063002024","37063002023"]
+
     @classmethod
     def setUpClass(cls):
         """Load geocoder in bulk"""
-        print 'foo'
-        cls.coder = utils.geocoder_from_ogr(test_layer, utils.EXACT, test_file, test_layer, test_field)
+        cls.coder = utils.geocoder_from_ogr(cls.test_layer, utils.EXACT, cls.test_file, cls.test_layer, cls.test_field)
 
     def test_single_geocode(self):
-        for geom in (self.coder[code] for code in test_codes):
+        for geom in (self.coder[code] for code in self.test_codes):
             self.assertIsNotNone(geom)
 
     def test_bulk_geocode(self):
-        k = list(self.coder.bulk_geocode(test_codes))
-        self.assertEqual(len(k), len(test_codes))
+        k = list(self.coder.bulk_geocode(self.test_codes))
+        self.assertEqual(len(k), len(self.test_codes))
         for c, g in k:
             self.assertIsNotNone(g)
 
@@ -114,3 +113,33 @@ class ExactGeocoderTest(TestCase):
     def tearDownClass(cls):
         """Drop geocoder and confirm it's gone"""
         cls.coder.drop()
+
+class OSMGeocoderTest(TestCase):
+    address = "3926 Swarthmore Rd Durham NC 27707"
+    test_addresses = [
+        "3926 Swarthmore Rd Durham NC 27707",
+        "100 Europa Dr. Chapel Hill, NC",
+        "1600 N. Damen Ave., Chicago, IL"
+    ]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.coder = geocoder.OpenStreetMapGeocoder()
+
+    def test_single_geocode(self):
+        location = self.coder[self.address]
+        location2 = self.coder[self.address, 3857]
+        self.assertIsNotNone(location)
+        self.assertIsNotNone(location2)
+        self.assertNotEqual(location, location2)
+
+    def test_bulk_geocode(self):
+        k = list(self.coder.bulk_geocode(self.test_addresses))
+        self.assertEqual(len(k), len(self.test_addresses))
+        for c, g in k:
+            self.assertIsNotNone(g)
+
+    def test_reverse_geocode(self):
+        swarthmore = Point(-78.9597, 35.93484, srid=4326)
+        code = self.coder.reverse_geocode(swarthmore)
+        self.assertIsNotNone(code)
