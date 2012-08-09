@@ -79,7 +79,7 @@ def ci_code(istr):
 
 def cs_code(istr):
     """Take an input string and treat it as a case sensitive code.  Identity except it strips leading and trailing whitespace"""
-    return istr.strip().lower()
+    return istr.strip()
 
 def cs_shortcode(istr):
     """Take an input string, potentially long, and return its MD5 sum"""
