@@ -1,44 +1,17 @@
-ga_irods - iRODS connector for Django with Celery
+ga_geocoder - Flexible geocoding for geoanalytics
 #################################################
 
-`ga_irods`_ is a Django+Celery -> `iRODS`_ connector.  The idea is that you can
-use this module to write webapps that call a data grid (iRODS) in a web-scale
-manner.  Every iCommand is a `Celery`_ task.  All iRODS environments are stored
-as model instances in a database.
+ga_geocoder is a flexible geocoder for Geoanalytics.  It requires
+ga_spatialnosql and the "requests" library (``pip install requests``).  There
+are a number of geocoders in ga_gecoder/geocoder.py that you can use to geocode
+either to open streetmap data (although you'll want to install your own version
+of Nominatim if you want to do bulk geocoding) or codes in your own geographic
+data (such as US Census FIPS codes or other kinds of meaningful names).
+Documentation is scant right now, as I've just finished coding the initial run
+of coders.  There will soon be an NGram based geocoder as well that will handle
+geocoding with spelling mistakes in a manner similar to the exact-geocoding on
+well-known names.  
 
-.. _iRODS: http://www.irods.org
-.. _Celery: http://www.celeryproject.org
-.. _ga_irods: http://www.github.com/JeffHeard/ga_irods
-
-This is all very well and good, but how to you use it?  Assuming you know a bit
-about iRODS, have or know someone who has an account, and are familiar with the
-icommands clients (these are commands analogous to the unix file system
-commands, but with an i- prepended), then usage of this app is quite simple.
-First, add 'ga_irods' to your list of INSTALLED_APPS in Django's settings.py.
-Then run::
-
-    $ python manage.py syncdb
-
-That will add the RodsEnvironment model to the admin tool.  Now, assuming
-you're an admin on your django installation (you should be if you can run
-manage.py at all), then you can add RodsEnvironments for each User in the
-system.  I capitalize User, because the owner of every RodsEnvironment must be
-an actual User in the django.contrib.auth application.  Finally, make sure that
-celeryd is running and that django-celery is installed and listed in
-INSTALLED_APPS.
-
-Once environments are setup, you can write a webapp that manipulates iRODS.  One
-might attach a RodsEnvironment to a session object, then use this to accomplish
-things in an example view like so in your views.py::
-
-    from ga_irods import tasks as itasks
-
-    @requires_login
-    def my_view(request):
-        if not 'rodsenvironment' in request.session:
-            # redirect to allow the user to select from his/her environments
-        else:
-            stdout, stderr = itasks.ils.delay(request.GET['path']).get()
-            return render_to_response('mytemplate.html', lsresults=stdout)
-
-For more information on icommands see the project documentation.
+Geocodes are returned as Python dicts that conform to the GeoJSON spec (if you
+do a json.dumps(code) you will get a GeoJSON document).  See the tests.py for
+examples of usage.  
